@@ -56,8 +56,17 @@
         document.getElementById("anotaciones").value = p.anotaciones || "";
         document.getElementById("resultado").classList.remove("hidden");
       } else {
-        let lista = resultados.map(p => `• ${p.cct} - ${p.nombre}`).join("\n");
-        alert(`Se encontraron los siguientes planteles:\n\n${lista}`);
+        let contenedorLista = document.getElementById("listaPlanteles");
+contenedorLista.innerHTML = ""; // Limpia resultados anteriores
+contenedorLista.classList.remove("hidden");
+
+resultados.forEach(p => {
+  const div = document.createElement("div");
+  div.className = "whitespace-nowrap overflow-x-auto border-b py-1";
+  div.textContent = `• ${p.cct} - ${p.nombre}`;
+  contenedorLista.appendChild(div);
+});
+
       }
     };
 
