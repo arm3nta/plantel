@@ -5,312 +5,205 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Consulta de Planteles</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdPLxFsiMNCFXfgCczkRUq7120-rGjERc",
+      authDomain: "planteles-5008d.firebaseapp.com",
+      projectId: "planteles-5008d",
+      storageBucket: "planteles-5008d.firebasestorage.app",
+      messagingSenderId: "1041807082745",
+      appId: "1:1041807082745:web:c2024378d1cfe35bf9ce28",
+      measurementId: "G-HQR2SRC11K"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let idActual = null;
+
+    window.buscarPlantel = async () => {
+      const entrada = document.getElementById("claveInput").value.trim().toLowerCase();
+      if (!entrada) return alert("Escribe un nombre, clave o municipio para buscar.");
+
+      const ref = collection(db, "planteles");
+      const snap = await getDocs(ref);
+      const resultados = [];
+
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (
+          data.cct.toLowerCase() === entrada ||
+          data.nombre.toLowerCase() === entrada ||
+          data.municipio.toLowerCase() === entrada
+        ) {
+          resultados.push({ id: doc.id, ...data });
+        }
+      });
+
+      if (resultados.length === 0) return alert("No se encontraron planteles.");
+
+      if (resultados.length === 1) {
+        const p = resultados[0];
+        idActual = p.id;
+        document.getElementById("nombre").textContent = p.nombre;
+        document.getElementById("cct").textContent = p.cct;
+        document.getElementById("municipio").textContent = p.municipio;
+        document.getElementById("tramite").textContent = p.tramite;
+        document.getElementById("faltantes").innerHTML = p.faltantes.map(d => `<li>${d}</li>`).join("");
+        document.getElementById("anotaciones").value = p.anotaciones || "";
+        document.getElementById("resultado").classList.remove("hidden");
+      } else {
+        let lista = resultados.map(p => `• ${p.cct} - ${p.nombre}`).join("\n");
+        alert(`Se encontraron los siguientes planteles:\n\n${lista}`);
+      }
+    };
+
+    window.limpiarCampos = () => {
+      document.getElementById("claveInput").value = "";
+      document.getElementById("resultado").classList.add("hidden");
+    };
+
+    window.mostrarModal = () => {
+      document.getElementById("nuevoNombre").value = "";
+      document.getElementById("nuevoCCT").value = "";
+      document.getElementById("nuevoMunicipio").value = "";
+      document.getElementById("nuevoAnotaciones").value = "";
+      document.querySelector('input[name="tramite"][value="UPCE Xalapa"]').checked = true;
+      document.querySelectorAll(".docCheckbox").forEach(cb => cb.checked = false);
+      document.getElementById("modalAgregar").classList.remove("hidden");
+    };
+
+    window.cerrarModal = () => {
+      document.getElementById("modalAgregar").classList.add("hidden");
+    };
+
+    window.guardarPlantel = async () => {
+      const nombre = document.getElementById("nuevoNombre").value.trim();
+      const cct = document.getElementById("nuevoCCT").value.trim();
+      const municipio = document.getElementById("nuevoMunicipio").value.trim();
+      const tramite = document.querySelector('input[name="tramite"]:checked').value;
+      const faltantes = Array.from(document.querySelectorAll(".docCheckbox:checked")).map(cb => cb.value);
+      const anotaciones = document.getElementById("nuevoAnotaciones").value.trim();
+
+      if (!nombre || !cct || !municipio) return alert("Llena todos los campos");
+
+      await addDoc(collection(db, "planteles"), { nombre, cct, municipio, tramite, faltantes, anotaciones });
+
+      cerrarModal();
+      alert("Plantel agregado exitosamente.");
+    };
+
+    window.abrirEdicion = async () => {
+      if (!idActual) return alert("Busca un plantel primero.");
+      const docRef = doc(db, "planteles", idActual);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) return alert("No se encontró el plantel");
+
+      const p = docSnap.data();
+      document.getElementById("editNombre").textContent = p.nombre;
+      document.getElementById("editCCT").textContent = p.cct;
+      document.getElementById("editMunicipio").textContent = p.municipio;
+      document.querySelectorAll('input[name="editTramite"]').forEach(r => {
+        r.checked = r.value === p.tramite;
+      });
+      document.querySelectorAll(".editDocCheckbox").forEach(cb => {
+        cb.checked = p.faltantes.includes(cb.value);
+      });
+      document.getElementById("editAnotaciones").value = p.anotaciones || "";
+      document.getElementById("modalEditar").classList.remove("hidden");
+    };
+
+    window.cerrarModalEditar = () => {
+      document.getElementById("modalEditar").classList.add("hidden");
+    };
+
+    window.guardarEdicion = async () => {
+      if (!idActual) return;
+      const tramite = document.querySelector('input[name="editTramite"]:checked').value;
+      const faltantes = Array.from(document.querySelectorAll(".editDocCheckbox:checked")).map(cb => cb.value);
+      const anotaciones = document.getElementById("editAnotaciones").value.trim();
+
+      await updateDoc(doc(db, "planteles", idActual), { tramite, faltantes, anotaciones });
+
+      cerrarModalEditar();
+      alert("Plantel modificado correctamente.");
+      limpiarCampos();
+    };
+
+    window.eliminarPlantel = async () => {
+      if (!idActual) return;
+      const confirmar = confirm("¿Estás seguro de eliminar este plantel?");
+      if (!confirmar) return;
+      await deleteDoc(doc(db, "planteles", idActual));
+      alert("Plantel eliminado.");
+      limpiarCampos();
+    };
+
+  </script>
 </head>
 <body class="bg-gray-100 p-6 font-sans">
-
-  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow-lg">
-    <h1 class="text-2xl font-bold mb-4 text-center">Consulta de Planteles</h1>
-
-    <!-- Formulario principal -->
-    <div class="flex flex-col gap-4">
-      <input id="claveInput" type="text" placeholder="Nombre, clave del plantel, Municipio"
-             class="border p-2 rounded w-full" />
-      <div class="flex gap-2">
-        <button onclick="buscarPlantel()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buscar</button>
-        <button onclick="limpiarCampos()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Nuevo</button>
-        <button onclick="mostrarModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Agregar</button>
-      </div>
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow-lg mb-10">
+  <h1 class="text-2xl font-bold mb-4 text-center">Consulta de Planteles</h1>
+  <div class="flex flex-col gap-4">
+    <input id="claveInput" type="text" placeholder="Nombre, clave del plantel, Municipio"
+           class="border p-2 rounded w-full" />
+    <div class="flex gap-2">
+      <button onclick="buscarPlantel()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buscar</button>
+      <button onclick="limpiarCampos()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Nuevo</button>
+      <button onclick="mostrarModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Agregar</button>
     </div>
+  </div>
 
-    <!-- Resultados -->
-    <div id="resultado" class="mt-6 hidden border-t pt-4">
-      <p><strong>Nombre:</strong> <span id="nombre"></span></p>
-      <p><strong>Clave CCT:</strong> <span id="cct"></span></p>
-      <p><strong>Municipio:</strong> <span id="municipio"></span></p>
-      <p><strong>Trámite:</strong> <span id="tramite"></span></p>
-      <p class="font-semibold mt-2">Documentos Faltantes:</p>
-      <ul id="faltantes" class="list-disc ml-5"></ul>
-      <div class="mt-4">
+  <!-- Resultados -->
+  <div id="resultado" class="mt-6 hidden border-t pt-4">
+    <p><strong>Nombre:</strong> <span id="nombre"></span></p>
+    <p><strong>Clave CCT:</strong> <span id="cct"></span></p>
+    <p><strong>Municipio:</strong> <span id="municipio"></span></p>
+    <p><strong>Trámite:</strong> <span id="tramite"></span></p>
+    <p class="font-semibold mt-2">Documentos Faltantes:</p>
+    <ul id="faltantes" class="list-disc ml-5"></ul>
+    <div class="mt-4">
       <p class="font-semibold mt-4">Anotaciones:</p>
       <textarea id="anotaciones" rows="4" class="w-full border rounded p-2" readonly></textarea>
+      <div class="mt-2">
         <button onclick="abrirEdicion()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Modificar</button>
         <button onclick="eliminarPlantel()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">Eliminar</button>
       </div>
     </div>
   </div>
-
-  <!-- Modal de Agregar -->
-  <div id="modalAgregar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-    <div class="bg-white p-6 rounded w-full max-w-md">
+</div>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden" id="modalAgregar">
+    <div class="bg-white p-6 rounded-lg shadow max-w-md w-full">
       <h2 class="text-xl font-bold mb-4">Agregar Plantel</h2>
-      <div class="flex flex-col gap-3">
-        <input id="nuevoNombre" type="text" placeholder="Nombre del Plantel" class="border p-2 rounded" />
-        <input id="nuevoCCT" type="text" placeholder="Clave del Centro de Trabajo (CCT)" class="border p-2 rounded" />
-        <input id="nuevoMunicipio" type="text" placeholder="Municipio" class="border p-2 rounded" />
-        <label class="text-sm font-medium">Trámite:</label>
-        <div class="flex gap-4 mt-1">
-          <label><input type="radio" name="tramite" value="UPCE Xalapa" checked /> UPCE Xalapa</label>
-          <label><input type="radio" name="tramite" value="SEP México" /> SEP México</label>
-          <label><input type="radio" name="tramite" value="SCEO Veracruz" /> SCEO Veracruz</label>
-        </div>
-
-        <label class="text-sm font-medium">Documentos Faltantes:</label>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <label><input type="checkbox" class="docCheckbox" value="Actualización de Datos" /> Actualización de Datos</label>
-          <label><input type="checkbox" class="docCheckbox" value="RVOE actualizado" /> RVOE actualizado</label>
-          <label><input type="checkbox" class="docCheckbox" value="Oferta Educativa" /> Oferta Educativa</label>
-          <label><input type="checkbox" class="docCheckbox" value="CCT" /> CCT</label>
-          <label><input type="checkbox" class="docCheckbox" value="Listado de Carreras" /> Listado de Carreras</label>
-          <label><input type="checkbox" class="docCheckbox" value="Comprobante domicilio" /> Comprobante domicilio</label>
-          <label><input type="checkbox" class="docCheckbox" value="Contrato de arrendamiento" /> Contrato de arrendamiento</label>
-          <label><input type="checkbox" class="docCheckbox" value="Informe Fotográfico" /> Informe Fotográfico</label>
-        </div>
-        <label class="text-sm font-medium mt-4" for="nuevoAnotaciones">Anotaciones:</label>
-        <textarea id="nuevoAnotaciones" rows="4" class="border p-2 rounded w-full"></textarea>
-
-
-        <div class="flex justify-end gap-2 mt-4">
-          <button onclick="cerrarModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancelar</button>
-          <button onclick="guardarPlantel()" class="bg-blue-600 text-white px-4 py-2 rounded">Guardar</button>
-        </div>
+      <input id="nuevoNombre" type="text" placeholder="Nombre del Plantel" class="border w-full p-2 rounded mb-2" />
+      <input id="nuevoCCT" type="text" placeholder="Clave del Centro de Trabajo (CCT)" class="border w-full p-2 rounded mb-2" />
+      <input id="nuevoMunicipio" type="text" placeholder="Municipio" class="border w-full p-2 rounded mb-4" />
+      <p class="text-sm font-medium">Trámite:</p>
+      <div class="flex gap-4 mb-4">
+        <label><input type="radio" name="tramite" value="UPCE Xalapa" checked /> UPCE Xalapa</label>
+        <label><input type="radio" name="tramite" value="SEP México" /> SEP México</label>
+        <label><input type="radio" name="tramite" value="SCEO Veracruz" /> SCEO Veracruz</label>
+      </div>
+      <p class="text-sm font-medium">Documentos Faltantes:</p>
+      <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+        <label><input type="checkbox" class="docCheckbox" value="Actualización de Datos" /> Actualización de Datos</label>
+        <label><input type="checkbox" class="docCheckbox" value="RVOE actualizado" /> RVOE actualizado</label>
+        <label><input type="checkbox" class="docCheckbox" value="Oferta Educativa" /> Oferta Educativa</label>
+        <label><input type="checkbox" class="docCheckbox" value="CCT" /> CCT</label>
+        <label><input type="checkbox" class="docCheckbox" value="Listado de Carreras" /> Listado de Carreras</label>
+        <label><input type="checkbox" class="docCheckbox" value="Comprobante domicilio" /> Comprobante domicilio</label>
+        <label><input type="checkbox" class="docCheckbox" value="Contrato de arrendamiento" /> Contrato de arrendamiento</label>
+        <label><input type="checkbox" class="docCheckbox" value="Informe Fotográfico" /> Informe Fotográfico</label>
+      </div>
+      <textarea id="nuevoAnotaciones" placeholder="Anotaciones..." class="border w-full p-2 rounded mb-4"></textarea>
+      <div class="flex justify-end gap-2">
+        <button onclick="cerrarModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancelar</button>
+        <button onclick="guardarPlantel()" class="bg-blue-600 text-white px-4 py-2 rounded">Guardar</button>
       </div>
     </div>
   </div>
-
-  <!-- Modal de Modificar -->
-  <div id="modalEditar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-    <div class="bg-white p-6 rounded w-full max-w-md">
-      <h2 class="text-xl font-bold mb-4">Modificar Documentación</h2>
-      <div class="flex flex-col gap-3">
-        <p><strong>Nombre:</strong> <span id="editNombre"></span></p>
-        <p><strong>CCT:</strong> <span id="editCCT"></span></p>
-        <p><strong>Municipio:</strong> <span id="editMunicipio"></span></p>
-
-        <label class="text-sm font-medium">Trámite:</label>
-        <div class="flex gap-4 mt-1">
-          <label><input type="radio" name="editTramite" value="UPCE Xalapa" /> UPCE Xalapa</label>
-          <label><input type="radio" name="editTramite" value="SEP México" /> SEP México</label>
-          <label><input type="radio" name="editTramite" value="SCEO Veracruz" /> SCEO Veracruz</label>
-        </div>
-
-        <label class="text-sm font-medium mt-2">Documentos Faltantes:</label>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <label><input type="checkbox" class="editDocCheckbox" value="Actualización de Datos" /> Actualización de Datos</label>
-          <label><input type="checkbox" class="editDocCheckbox" value="RVOE actualizado" /> RVOE actualizado</label>
-          <label><input type="checkbox" class="editDocCheckbox" value="Oferta Educativa" /> Oferta Educativa</label>
-          <label><input type="checkbox" class="editDocCheckbox" value="CCT" /> CCT</label>
-          <label><input type="checkbox" class="editDocCheckbox" value="Listado de Carreras" /> Listado de Carreras</label>
-          <label><input type="checkbox" class="editDocCheckbox" value="Comprobante domicilio" /> Comprobante domicilio</label>
-          <label><input type="checkbox" class="editDocCheckbox" value="Contrato de arrendamiento" /> Contrato de arrendamiento</label>
-          <label><input type="checkbox" class="editDocCheckbox" value="Informe Fotográfico" /> Informe Fotográfico</label>
-        </div>
-        <label class="text-sm font-medium mt-4" for="editAnotaciones">Anotaciones:</label>
-        <textarea id="editAnotaciones" rows="4" class="border p-2 rounded w-full"></textarea>
-
-
-        <div class="flex justify-end gap-2 mt-4">
-          <button onclick="cerrarModalEditar()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancelar</button>
-          <button onclick="guardarEdicion()" class="bg-yellow-600 text-white px-4 py-2 rounded">Guardar Cambios</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let cctEnEdicion = null;
-
-    // Recuperar base de datos guardada en localStorage, si existe
-    let baseDatos = {};
-    const baseGuardada = localStorage.getItem("planteles");
-    if (baseGuardada) {
-      baseDatos = JSON.parse(baseGuardada);
-    } else {
-      // Si no hay datos guardados, inicializamos con algunos de ejemplo
-      baseDatos = {
-        "plantel01": {
-          nombre: "Plantel Xalapa Centro",
-          cct: "PLANTEL01",
-          tramite: "UPCE Xalapa",
-          municipio: "Xalapa",
-          faltantes: ["RVOE actualizado", "Contrato de arrendamiento"]
-        },
-        "plantel02": {
-          nombre: "Plantel México Sur",
-          cct: "PLANTEL02",
-          tramite: "SEP México",
-          municipio: "Coyoacán",
-          faltantes: ["Informe Fotográfico", "Oferta Educativa"]
-        }
-      };
-    }
-
-    function buscarPlantel() {
-  const entrada = document.getElementById("claveInput").value.trim().toLowerCase();
-
-  if (!entrada) {
-    alert("Escribe un nombre, clave o municipio para buscar.");
-    return;
-  }
-
-  const coincidencias = [];
-
-  for (const [clave, data] of Object.entries(baseDatos)) {
-    if (
-      clave.toLowerCase() === entrada ||
-      data.nombre.toLowerCase() === entrada ||
-      data.municipio.toLowerCase() === entrada
-    ) {
-      coincidencias.push(data);
-    }
-  }
-
-  if (coincidencias.length === 0) {
-    alert("No se encontraron planteles.");
-    return;
-  }
-
-  if (coincidencias.length === 1) {
-    // Mostrar detalle si solo hay una coincidencia
-    const resultado = coincidencias[0];
-    document.getElementById("nombre").textContent = resultado.nombre;
-    document.getElementById("cct").textContent = resultado.cct.toUpperCase();
-    document.getElementById("municipio").textContent = resultado.municipio;
-    document.getElementById("tramite").textContent = resultado.tramite;
-
-    const ul = document.getElementById("faltantes");
-    ul.innerHTML = "";
-    resultado.faltantes.forEach(doc => {
-      const li = document.createElement("li");
-      li.textContent = doc;
-      ul.appendChild(li);
-    });
-
-    document.getElementById("resultado").classList.remove("hidden");
-
-  } else {
-    // Mostrar lista de coincidencias si hay más de una
-    let mensaje = "Se encontraron los siguientes planteles:\n\n";
-    coincidencias.forEach(p => {
-      mensaje += `• ${p.cct.toUpperCase()} - ${p.nombre}\n`;
-    });
-    alert(mensaje);
-  }
-}
-
-    function limpiarCampos() {
-      document.getElementById("claveInput").value = "";
-      document.getElementById("resultado").classList.add("hidden");
-    }
-
-    function mostrarModal() {
-      document.getElementById("nuevoNombre").value = "";
-      document.getElementById("nuevoCCT").value = "";
-      document.getElementById("nuevoMunicipio").value = "";
-      document.getElementById("nuevoAnotaciones").value = "";
-
-      document.querySelector('input[name="tramite"][value="UPCE Xalapa"]').checked = true;
-      document.querySelectorAll(".docCheckbox").forEach(cb => cb.checked = false);
-
-      document.getElementById("modalAgregar").classList.remove("hidden");
-    }
-
-    function cerrarModal() {
-      document.getElementById("modalAgregar").classList.add("hidden");
-    }
-
-    function guardarPlantel() {
-  const nombre = document.getElementById("nuevoNombre").value.trim();
-  const cct = document.getElementById("nuevoCCT").value.trim().toLowerCase();
-  const municipio = document.getElementById("nuevoMunicipio").value.trim();
-  const tramite = document.querySelector('input[name="tramite"]:checked').value;
-  const faltantes = Array.from(document.querySelectorAll(".docCheckbox:checked")).map(cb => cb.value);
-  const anotaciones = document.getElementById("nuevoAnotaciones").value.trim();
-
-  if (!nombre || !municipio || !cct) {
-    alert("Llena todos los campos");
-    return;
-  }
-
-  if (baseDatos[cct]) {
-    alert("Ya existe un plantel con esa clave CCT");
-    return;
-  }
-
-  baseDatos[cct] = { nombre, cct, municipio, tramite, faltantes, anotaciones };
-
-  localStorage.setItem("planteles", JSON.stringify(baseDatos));
-
-  cerrarModal();
-  alert("Plantel agregado exitosamente.");
-}
-
-function abrirEdicion() {
-  const cct = document.getElementById("cct").textContent.trim().toLowerCase();
-  if (!cct || !baseDatos[cct]) {
-    alert("Busca un plantel primero.");
-    return;
-  }
-
-  const plantel = baseDatos[cct];
-  cctEnEdicion = cct;
-
-  document.getElementById("editNombre").textContent = plantel.nombre;
-  document.getElementById("editCCT").textContent = cct.toUpperCase();
-  document.getElementById("editMunicipio").textContent = plantel.municipio;
-
-  document.querySelectorAll('input[name="editTramite"]').forEach(r => {
-    r.checked = r.value === plantel.tramite;
-  });
-
-  document.querySelectorAll(".editDocCheckbox").forEach(cb => {
-    cb.checked = plantel.faltantes.includes(cb.value);
-  });
-
-  document.getElementById("editAnotaciones").value = plantel.anotaciones || "";
-
-  document.getElementById("modalEditar").classList.remove("hidden");
-}
-
-    function cerrarModalEditar() {
-      document.getElementById("modalEditar").classList.add("hidden");
-      cctEnEdicion = null;
-    }
-
-    function guardarEdicion() {
-  if (!cctEnEdicion) return;
-
-  const tramite = document.querySelector('input[name="editTramite"]:checked').value;
-  const faltantes = Array.from(document.querySelectorAll(".editDocCheckbox:checked")).map(cb => cb.value);
-  const anotaciones = document.getElementById("editAnotaciones").value.trim();
-
-  baseDatos[cctEnEdicion].tramite = tramite;
-  baseDatos[cctEnEdicion].faltantes = faltantes;
-  baseDatos[cctEnEdicion].anotaciones = anotaciones;
-
-  localStorage.setItem("planteles", JSON.stringify(baseDatos));
-
-  cerrarModalEditar();
-  alert("Plantel modificado correctamente.");
-  limpiarCampos();
-}
-
-    function eliminarPlantel() {
-      const cct = document.getElementById("cct").textContent.trim().toUpperCase();
-
-      if (!cct || !baseDatos[cct]) {
-        alert("No hay plantel cargado para eliminar.");
-        return;
-      }
-
-      const confirmacion = confirm(`¿Estás seguro de eliminar el plantel "${baseDatos[cct].nombre}"? Esta acción no se puede deshacer.`);
-
-      if (confirmacion) {
-        delete baseDatos[cct];
-        localStorage.setItem("planteles", JSON.stringify(baseDatos));
-        alert("Plantel eliminado exitosamente.");
-        limpiarCampos();
-      }
-    }
-  </script>
 </body>
 </html>
