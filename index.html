@@ -176,7 +176,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.buscarPlantel = async function () {
+    globalThis.buscarPlantel = async function () {
       const termino = document.getElementById("busqueda").value.trim();
       const resultadosDiv = document.getElementById("resultados");
       resultadosDiv.innerHTML = "";
@@ -222,20 +222,20 @@
       }
     };
 
-    window.mostrarFormularioAgregar = () => {
+    globalThis.mostrarFormularioAgregar = () => {
       document.getElementById("formAgregar").style.display = "block";
     };
 
-    window.cancelarAgregar = () => {
+    globalThis.cancelarAgregar = () => {
       document.getElementById("formAgregar").style.display = "none";
     };
 
-    window.limpiarPantalla = () => {
+    globalThis.limpiarPantalla = () => {
       document.getElementById("busqueda").value = "";
       document.getElementById("resultados").innerHTML = "";
     };
 
-    window.guardarPlantel = async () => {
+    globalThis.guardarPlantel = async () => {
       const nuevo = {
         nombre: document.getElementById("nombrePlantel").value,
         cct: document.getElementById("clavePlantel").value,
@@ -247,17 +247,17 @@
 
       await addDoc(collection(db, "planteles"), nuevo);
       alert("Plantel agregado");
-      cancelarAgregar();
-      limpiarPantalla();
+      globalThis.cancelarAgregar();
+      globalThis.limpiarPantalla();
     };
 
-    window.eliminarPlantel = async (id) => {
+    globalThis.eliminarPlantel = async (id) => {
       await deleteDoc(doc(db, "planteles", id));
       alert("Plantel eliminado");
-      limpiarPantalla();
+      globalThis.limpiarPantalla();
     };
 
-    window.modificarPlantel = async (id) => {
+    globalThis.modificarPlantel = async (id) => {
       const nuevosDocs = prompt("Nuevos documentos separados por coma:");
       const nuevaNota = prompt("Nuevas anotaciones:");
       if (nuevosDocs !== null && nuevaNota !== null) {
@@ -266,7 +266,7 @@
           anotaciones: nuevaNota
         });
         alert("Plantel modificado");
-        limpiarPantalla();
+        globalThis.limpiarPantalla();
       }
     };
   </script>
