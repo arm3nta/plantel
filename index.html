@@ -80,11 +80,17 @@
       min-width: 120px;
     }
 
-    #formAgregar {
+    .ventana {
       display: none;
-      border-top: 2px solid var(--primario);
       margin-top: 20px;
-      padding-top: 20px;
+      padding: 20px;
+      border: 2px solid var(--primario);
+      border-radius: 10px;
+      background-color: #fff;
+    }
+
+    .ventana.active {
+      display: block;
     }
 
     @media (max-width: 600px) {
@@ -117,14 +123,17 @@
     <h1>Consulta de Planteles</h1>
     <input type="text" id="busqueda" placeholder="Clave, nombre o municipio">
     <div class="botones-row">
-      <button onclick="buscarPlantel()">Buscar</button>
+      <button onclick="mostrarVentana('ventanaBusqueda')">Buscar</button>
+      <button onclick="mostrarVentana('ventanaAgregar')">Agregar</button>
       <button onclick="limpiarPantalla()">Nuevo</button>
-      <button onclick="mostrarFormularioAgregar()">Agregar</button>
     </div>
 
-    <div id="resultados"></div>
+    <div id="ventanaBusqueda" class="ventana">
+      <h3>Resultados de Búsqueda</h3>
+      <div id="resultados"></div>
+    </div>
 
-    <div id="formAgregar">
+    <div id="ventanaAgregar" class="ventana">
       <h3>Agregar Plantel</h3>
       <input type="text" id="nombrePlantel" placeholder="Nombre del Plantel">
       <input type="text" id="clavePlantel" placeholder="Clave del Centro de Trabajo (CCT)">
@@ -154,7 +163,7 @@
 
       <div class="botones-row">
         <button onclick="guardarPlantel()">Guardar</button>
-        <button onclick="cancelarAgregar()">Cancelar</button>
+        <button onclick="mostrarVentana(null)">Cancelar</button>
       </div>
     </div>
   </div>
@@ -176,6 +185,17 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    globalThis.mostrarVentana = function(id) {
+      document.querySelectorAll('.ventana').forEach(v => v.classList.remove('active'));
+      if (id) document.getElementById(id).classList.add('active');
+    };
+
+    globalThis.limpiarPantalla = () => {
+      document.getElementById("busqueda").value = "";
+      document.getElementById("resultados").innerHTML = "";
+      mostrarVentana(null);
+    };
+
     globalThis.buscarPlantel = async function () {
       const termino = document.getElementById("busqueda").value.trim();
       const resultadosDiv = document.getElementById("resultados");
@@ -195,17 +215,9 @@
         return;
       }
 
-      if (encontrados.every(p => p.municipio.toLowerCase() === termino.toLowerCase())) {
-        encontrados.forEach(p => {
-          const div = document.createElement("div");
-          div.className = "plantel-item";
-          div.textContent = `${p.cct} - ${p.nombre}`;
-          resultadosDiv.appendChild(div);
-        });
-      } else {
-        const p = encontrados[0];
+      encontrados.forEach(p => {
         const div = document.createElement("div");
-        div.className = "recuadro";
+        div.className = "plantel-item";
         div.innerHTML = `
           <strong>${p.nombre}</strong><br>
           CCT: ${p.cct}<br>
@@ -219,20 +231,9 @@
           </div>
         `;
         resultadosDiv.appendChild(div);
-      }
-    };
+      });
 
-    globalThis.mostrarFormularioAgregar = () => {
-      document.getElementById("formAgregar").style.display = "block";
-    };
-
-    globalThis.cancelarAgregar = () => {
-      document.getElementById("formAgregar").style.display = "none";
-    };
-
-    globalThis.limpiarPantalla = () => {
-      document.getElementById("busqueda").value = "";
-      document.getElementById("resultados").innerHTML = "";
+      mostrarVentana('ventanaBusqueda');
     };
 
     globalThis.guardarPlantel = async () => {
@@ -247,14 +248,14 @@
 
       await addDoc(collection(db, "planteles"), nuevo);
       alert("Plantel agregado");
-      globalThis.cancelarAgregar();
-      globalThis.limpiarPantalla();
+      mostrarVentana(null);
+      limpiarPantalla();
     };
 
     globalThis.eliminarPlantel = async (id) => {
       await deleteDoc(doc(db, "planteles", id));
       alert("Plantel eliminado");
-      globalThis.limpiarPantalla();
+      buscarPlantel();
     };
 
     globalThis.modificarPlantel = async (id) => {
@@ -266,7 +267,7 @@
           anotaciones: nuevaNota
         });
         alert("Plantel modificado");
-        globalThis.limpiarPantalla();
+        buscarPlantel();
       }
     };
   </script>
