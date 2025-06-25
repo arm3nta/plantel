@@ -1,275 +1,58 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta de Planteles</title>
-  <style>
-    :root {
-      --primario: #0077cc;
-      --fondo: #f4f8fb;
-      --borde: #ccc;
-      --texto: #333;
-    }
+// Código HTML y CSS igual...
 
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: var(--fondo);
-      color: var(--texto);
-    }
-
-    h1 {
-      color: var(--primario);
-      text-align: center;
-      font-size: 2rem;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    input, select, textarea, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid var(--borde);
-      border-radius: 5px;
-      font-size: 1em;
-    }
-
-    button {
-      background-color: var(--primario);
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #005fa3;
-    }
-
-    .recuadro, .plantel-item {
-      background: #fdfdfd;
-      border: 1px solid var(--borde);
-      padding: 15px;
-      margin-top: 10px;
-      border-radius: 5px;
-      word-wrap: break-word;
-    }
-
-    .botones-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .botones-row button {
-      flex: 1;
-      min-width: 120px;
-    }
-
-    .ventana {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      border: 2px solid var(--primario);
-      border-radius: 10px;
-      background-color: #fff;
-    }
-
-    .ventana.active {
-      display: block;
-    }
-
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      .container {
-        padding: 15px;
-      }
-
-      input, select, textarea, button {
-        font-size: 0.95em;
-        padding: 10px;
-      }
-
-      .botones-row {
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .botones-row button {
-        width: 100%;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Consulta de Planteles</h1>
-    <input type="text" id="busqueda" placeholder="Clave, nombre o municipio">
-    <div class="botones-row">
-      <button onclick="mostrarVentana('ventanaBusqueda')">Buscar</button>
-      <button onclick="mostrarVentana('ventanaAgregar')">Agregar</button>
-      <button onclick="limpiarPantalla()">Nuevo</button>
-    </div>
-
-    <div id="ventanaBusqueda" class="ventana">
-      <h3>Resultados de Búsqueda</h3>
-      <div id="resultados"></div>
-    </div>
-
-    <div id="ventanaAgregar" class="ventana">
-      <h3>Agregar Plantel</h3>
-      <input type="text" id="nombrePlantel" placeholder="Nombre del Plantel">
-      <input type="text" id="clavePlantel" placeholder="Clave del Centro de Trabajo (CCT)">
-      <input type="text" id="municipioPlantel" placeholder="Municipio">
-
-      <label><strong>Trámite:</strong></label>
-      <select id="tramite">
-        <option value="UPECE Xalapa">UPECE Xalapa</option>
-        <option value="SEP México">SEP México</option>
-        <option value="SCEO Veracruz">SCEO Veracruz</option>
-      </select>
-
-      <label><strong>Documentos Faltantes:</strong></label>
-      <select id="documentosFaltantes" multiple size="6">
-        <option>ACTUALIZACIÓN DE DATOS</option>
-        <option>OFERTA EDUCATIVA</option>
-        <option>LISTADO DE CARRERAS</option>
-        <option>CONTRATO DE ARRENDAMIENTO</option>
-        <option>RVOE ACTUALIZADO</option>
-        <option>CCT</option>
-        <option>COMPROBANTE DE DOMICILIO</option>
-        <option>INFORME FOTOGRÁFICO</option>
-      </select>
-
-      <label><strong>Anotaciones:</strong></label>
-      <textarea id="anotaciones" rows="4" placeholder="Ingrese anotaciones aquí..."></textarea>
-
-      <div class="botones-row">
-        <button onclick="guardarPlantel()">Guardar</button>
-        <button onclick="mostrarVentana(null)">Cancelar</button>
-      </div>
-    </div>
+<!-- Agregamos una nueva ventana para editar -->
+<div id="ventanaModificar" class="seccion ventana">
+  <h3>Modificar Plantel</h3>
+  <label>Documentos Faltantes</label>
+  <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+    <label><input type="checkbox" class="mod-checkbox" value="ACTUALIZACIÓN DE DATOS"> ACTUALIZACIÓN DE DATOS</label>
+    <label><input type="checkbox" class="mod-checkbox" value="OFERTA EDUCATIVA"> OFERTA EDUCATIVA</label>
+    <label><input type="checkbox" class="mod-checkbox" value="LISTADO DE CARRERAS"> LISTADO DE CARRERAS</label>
+    <label><input type="checkbox" class="mod-checkbox" value="CONTRATO DE ARRENDAMIENTO"> CONTRATO DE ARRENDAMIENTO</label>
+    <label><input type="checkbox" class="mod-checkbox" value="RVOE ACTUALIZADO"> RVOE ACTUALIZADO</label>
+    <label><input type="checkbox" class="mod-checkbox" value="CCT"> CCT</label>
+    <label><input type="checkbox" class="mod-checkbox" value="COMPROBANTE DE DOMICILIO"> COMPROBANTE DE DOMICILIO</label>
+    <label><input type="checkbox" class="mod-checkbox" value="INFORME FOTOGRÁFICO"> INFORME FOTOGRÁFICO</label>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+  <label>Anotaciones</label>
+  <textarea id="modAnotaciones" rows="4" placeholder="Modifica anotaciones..."></textarea>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBdPLxFsiMNCFXfgCczkRUq7120-rGjERc",
-      authDomain: "planteles-5008d.firebaseapp.com",
-      projectId: "planteles-5008d",
-      storageBucket: "planteles-5008d.firebasestorage.app",
-      messagingSenderId: "1041807082745",
-      appId: "1:1041807082745:web:c2024378d1cfe35bf9ce28",
-      measurementId: "G-HQR2SRC11K"
-    };
+  <div class="botones-row">
+    <button onclick="guardarModificacion()">Guardar Cambios</button>
+    <button onclick="mostrarVentana(null)">Cancelar</button>
+  </div>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+<script type="module">
+  // Código Firebase igual...
+  let idPlantelAModificar = null;
 
-    globalThis.mostrarVentana = function(id) {
-      document.querySelectorAll('.ventana').forEach(v => v.classList.remove('active'));
-      if (id) document.getElementById(id).classList.add('active');
-    };
+  globalThis.modificarPlantel = async (id) => {
+    idPlantelAModificar = id;
+    const docSnap = await getDocs(collection(db, "planteles"));
+    const datos = docSnap.docs.find(d => d.id === id).data();
 
-    globalThis.limpiarPantalla = () => {
-      document.getElementById("busqueda").value = "";
-      document.getElementById("resultados").innerHTML = "";
-      mostrarVentana(null);
-    };
+    // Set checkboxes y anotaciones
+    document.querySelectorAll('.mod-checkbox').forEach(cb => {
+      cb.checked = datos.documentos?.includes(cb.value) || false;
+    });
+    document.getElementById("modAnotaciones").value = datos.anotaciones || "";
+    mostrarVentana('ventanaModificar');
+  };
 
-    globalThis.buscarPlantel = async function () {
-      const termino = document.getElementById("busqueda").value.trim();
-      const resultadosDiv = document.getElementById("resultados");
-      resultadosDiv.innerHTML = "";
+  globalThis.guardarModificacion = async () => {
+    const checks = document.querySelectorAll('.mod-checkbox:checked');
+    const documentos = Array.from(checks).map(c => c.value);
+    const anotaciones = document.getElementById("modAnotaciones").value;
 
-      const snapshot = await getDocs(collection(db, "planteles"));
-      const planteles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    await updateDoc(doc(db, "planteles", idPlantelAModificar), {
+      documentos,
+      anotaciones
+    });
 
-      const encontrados = planteles.filter(p =>
-        p.cct === termino ||
-        p.nombre.toLowerCase().includes(termino.toLowerCase()) ||
-        p.municipio.toLowerCase() === termino.toLowerCase()
-      );
-
-      if (encontrados.length === 0) {
-        resultadosDiv.innerHTML = "<p>No se encontraron resultados.</p>";
-        return;
-      }
-
-      encontrados.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "plantel-item";
-        div.innerHTML = `
-          <strong>${p.nombre}</strong><br>
-          CCT: ${p.cct}<br>
-          Municipio: ${p.municipio}<br>
-          Trámite: ${p.tramite}<br>
-          Documentos: ${p.documentos?.join(', ') || ''}<br>
-          Anotaciones: ${p.anotaciones || ''}<br>
-          <div class='botones-row'>
-            <button onclick="modificarPlantel('${p.id}')">Modificar</button>
-            <button onclick="eliminarPlantel('${p.id}')">Eliminar</button>
-          </div>
-        `;
-        resultadosDiv.appendChild(div);
-      });
-
-      mostrarVentana('ventanaBusqueda');
-    };
-
-    globalThis.guardarPlantel = async () => {
-      const nuevo = {
-        nombre: document.getElementById("nombrePlantel").value,
-        cct: document.getElementById("clavePlantel").value,
-        municipio: document.getElementById("municipioPlantel").value,
-        tramite: document.getElementById("tramite").value,
-        documentos: Array.from(document.getElementById("documentosFaltantes").selectedOptions).map(o => o.value),
-        anotaciones: document.getElementById("anotaciones").value
-      };
-
-      await addDoc(collection(db, "planteles"), nuevo);
-      alert("Plantel agregado");
-      mostrarVentana(null);
-      limpiarPantalla();
-    };
-
-    globalThis.eliminarPlantel = async (id) => {
-      await deleteDoc(doc(db, "planteles", id));
-      alert("Plantel eliminado");
-      buscarPlantel();
-    };
-
-    globalThis.modificarPlantel = async (id) => {
-      const nuevosDocs = prompt("Nuevos documentos separados por coma:");
-      const nuevaNota = prompt("Nuevas anotaciones:");
-      if (nuevosDocs !== null && nuevaNota !== null) {
-        await updateDoc(doc(db, "planteles", id), {
-          documentos: nuevosDocs.split(",").map(d => d.trim()),
-          anotaciones: nuevaNota
-        });
-        alert("Plantel modificado");
-        buscarPlantel();
-      }
-    };
-  </script>
-</body>
-</html>
+    alert("Plantel modificado");
+    mostrarVentana(null);
+    buscarPlantel();
+  };
+</script>
