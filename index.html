@@ -1,57 +1,71 @@
-<!-- Agregamos una nueva ventana para editar -->
-<div id="ventanaModificar" class="seccion ventana" style="background-color: #fefefe; border-left: 5px solid #0077cc; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-  <h3 style="color: #0077cc; font-size: 1.4rem; margin-bottom: 20px;">Modificar Plantel</h3>
-  
-  <label style="display:block; font-weight:bold; margin-bottom:5px;">Documentos Faltantes</label>
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-bottom: 20px;">
-    <label><input type="checkbox" class="mod-checkbox" value="ACTUALIZACIÓN DE DATOS"> ACTUALIZACIÓN DE DATOS</label>
-    <label><input type="checkbox" class="mod-checkbox" value="OFERTA EDUCATIVA"> OFERTA EDUCATIVA</label>
-    <label><input type="checkbox" class="mod-checkbox" value="LISTADO DE CARRERAS"> LISTADO DE CARRERAS</label>
-    <label><input type="checkbox" class="mod-checkbox" value="CONTRATO DE ARRENDAMIENTO"> CONTRATO DE ARRENDAMIENTO</label>
-    <label><input type="checkbox" class="mod-checkbox" value="RVOE ACTUALIZADO"> RVOE ACTUALIZADO</label>
-    <label><input type="checkbox" class="mod-checkbox" value="CCT"> CCT</label>
-    <label><input type="checkbox" class="mod-checkbox" value="COMPROBANTE DE DOMICILIO"> COMPROBANTE DE DOMICILIO</label>
-    <label><input type="checkbox" class="mod-checkbox" value="INFORME FOTOGRÁFICO"> INFORME FOTOGRÁFICO</label>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta de Planteles</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow-lg">
+    <h1 class="text-2xl font-bold mb-4 text-center">Consulta de Planteles</h1>
+
+    <div class="flex flex-col gap-4">
+      <input id="claveInput" type="text" placeholder="Nombre, clave del plantel, Municipio"
+             class="border p-2 rounded w-full" />
+      <div class="flex gap-2">
+        <button onclick="buscarPlantel()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buscar</button>
+        <button onclick="limpiarCampos()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Nuevo</button>
+        <button onclick="mostrarModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Agregar</button>
+      </div>
+    </div>
+
+    <div id="resultado" class="mt-6 hidden border-t pt-4">
+      <p><strong>Nombre:</strong> <span id="nombre"></span></p>
+      <p><strong>Clave CCT:</strong> <span id="cct"></span></p>
+      <p><strong>Municipio:</strong> <span id="municipio"></span></p>
+      <p><strong>Trámite:</strong> <span id="tramite"></span></p>
+      <p class="font-semibold mt-2">Documentos Faltantes:</p>
+      <ul id="faltantes" class="list-disc ml-5"></ul>
+
+      <div class="mt-4">
+        <p class="font-semibold mt-4">Anotaciones:</p>
+        <textarea id="anotaciones" rows="4" class="w-full border rounded p-2" readonly></textarea>
+        <button onclick="abrirEdicion()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Modificar</button>
+        <button onclick="eliminarPlantel()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">Eliminar</button>
+      </div>
+    </div>
   </div>
 
-  <label style="display:block; font-weight:bold; margin-bottom:5px;">Anotaciones</label>
-  <textarea id="modAnotaciones" rows="4" placeholder="Modifica anotaciones..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; resize: vertical; margin-bottom: 20px;"></textarea>
+  <!-- Modal Agregar Plantel -->
+  <div id="modalAgregar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Agregar Nuevo Plantel</h2>
+      <input id="nuevoNombre" placeholder="Nombre del plantel" class="border p-2 rounded w-full mb-2" />
+      <input id="nuevoCCT" placeholder="Clave CCT" class="border p-2 rounded w-full mb-2" />
+      <input id="nuevoMunicipio" placeholder="Municipio" class="border p-2 rounded w-full mb-2" />
 
-  <div class="botones-row" style="display: flex; gap: 10px;">
-    <button onclick="guardarModificacion()">Guardar Cambios</button>
-    <button onclick="mostrarVentana(null)" style="background-color: #ccc; color: #333;">Cancelar</button>
+      <select id="nuevoTramite" class="border p-2 rounded w-full mb-2">
+        <option value="">Selecciona un trámite</option>
+        <option value="UPECE Xalapa">UPECE Xalapa</option>
+        <option value="SEP México">SEP México</option>
+        <option value="SCEO Veracruz">SCEO Veracruz</option>
+      </select>
+
+      <select id="nuevoFaltantes" multiple class="border p-2 rounded w-full mb-2 h-32">
+        <option value="RVOE actualizado">RVOE actualizado</option>
+        <option value="Contrato de arrendamiento">Contrato de arrendamiento</option>
+        <option value="Comprobante de pago">Comprobante de pago</option>
+        <option value="Estudio de factibilidad">Estudio de factibilidad</option>
+        <option value="Plano de ubicación">Plano de ubicación</option>
+      </select>
+
+      <textarea id="nuevoAnotaciones" placeholder="Anotaciones" class="border p-2 rounded w-full mb-4"></textarea>
+
+      <div class="flex justify-end gap-2">
+        <button onclick="cerrarModalAgregar()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancelar</button>
+        <button onclick="guardarPlantel()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Guardar</button>
+      </div>
+    </div>
   </div>
-</div>
-
-<script type="module">
-  // Código Firebase igual...
-  let idPlantelAModificar = null;
-
-  globalThis.modificarPlantel = async (id) => {
-    idPlantelAModificar = id;
-    const docSnap = await getDocs(collection(db, "planteles"));
-    const datos = docSnap.docs.find(d => d.id === id).data();
-
-    // Set checkboxes y anotaciones
-    document.querySelectorAll('.mod-checkbox').forEach(cb => {
-      cb.checked = datos.documentos?.includes(cb.value) || false;
-    });
-    document.getElementById("modAnotaciones").value = datos.anotaciones || "";
-    mostrarVentana('ventanaModificar');
-  };
-
-  globalThis.guardarModificacion = async () => {
-    const checks = document.querySelectorAll('.mod-checkbox:checked');
-    const documentos = Array.from(checks).map(c => c.value);
-    const anotaciones = document.getElementById("modAnotaciones").value;
-
-    await updateDoc(doc(db, "planteles", idPlantelAModificar), {
-      documentos,
-      anotaciones
-    });
-
-    alert("Plantel modificado");
-    mostrarVentana(null);
-    buscarPlantel();
-  };
-</script>
